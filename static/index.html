@@ -248,15 +248,112 @@
       .suggestion-chip:hover {
         background: #e9f0f7;
       }
+      #login-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      #login-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 32px;
+        width: 320px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      }
+      #login-card h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        color: var(--navy);
+      }
+      #login-card p {
+        margin: 0 0 18px;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      #login-card input {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      #login-card button {
+        width: 100%;
+        padding: 10px;
+        background: var(--navy);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #login-error {
+        color: #a33a3a;
+        font-size: 12.5px;
+        margin-top: 8px;
+        display: none;
+      }
+      #login-hint {
+        margin-top: 14px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .feedback-row {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .fb-btn {
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 8px;
+        padding: 3px 8px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .fb-btn.active {
+        background: var(--accent);
+        color: white;
+      }
+      #logout {
+        margin-left: 10px;
+        font-size: 11px;
+        color: #b9cbdd;
+        cursor: pointer;
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
+    <div id="login-overlay">
+      <div id="login-card">
+        <h2>Campus Assistant</h2>
+        <p>Sign in to continue</p>
+        <form id="login-form">
+          <input type="text" id="login-username" placeholder="Username" autocomplete="username" />
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+          <button type="submit">Sign in</button>
+        </form>
+        <div id="login-error">Invalid username or password.</div>
+        <div id="login-hint">
+          Demo accounts: student1/student123 · faculty1/faculty123 · admin1/admin123
+        </div>
+      </div>
+    </div>
     <header>
       <div class="logo">SI</div>
       <h1>Campus Assistant — Sunrise Institute of Technology</h1>
       <div class="status">
         <span class="dot" id="status-dot"></span
-        ><span id="status-text">Checking...</span>
+        ><span id="status-text">Checking...</span
+        ><span id="logout" onclick="logout()">Sign out</span>
       </div>
     </header>
 
@@ -302,6 +399,52 @@
       const emptyState = document.getElementById("empty-state");
       const statusDot = document.getElementById("status-dot");
       const statusText = document.getElementById("status-text");
+      const loginOverlay = document.getElementById("login-overlay");
+      const loginForm = document.getElementById("login-form");
+      const loginError = document.getElementById("login-error");
+
+      let sessionId = null; // assigned by the server on first /chat call
+      let token = localStorage.getItem("access_token");
+
+      function logout() {
+        localStorage.removeItem("access_token");
+        token = null;
+        sessionId = null;
+        location.reload();
+      }
+
+      function showApp() {
+        loginOverlay.style.display = "none";
+        checkHealth();
+      }
+
+      if (token) showApp();
+      else loginOverlay.style.display = "flex";
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value;
+        loginError.style.display = "none";
+        try {
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ username, password }),
+          });
+          if (!res.ok) {
+            loginError.style.display = "block";
+            return;
+          }
+          const data = await res.json();
+          token = data.access_token;
+          localStorage.setItem("access_token", token);
+          showApp();
+        } catch (e) {
+          loginError.textContent = "Could not reach the server.";
+          loginError.style.display = "block";
+        }
+      });
 
       async function checkHealth() {
         try {
@@ -319,9 +462,8 @@
           statusText.textContent = "Backend unreachable";
         }
       }
-      checkHealth();
 
-      function addMessage(role, text, sources) {
+      function addMessage(role, text, sources, forFeedback) {
         if (emptyState) emptyState.remove();
         const msg = document.createElement("div");
         msg.className = `msg ${role}`;
@@ -341,6 +483,39 @@
           });
           msg.appendChild(srcWrap);
         }
+
+        if (forFeedback) {
+          const row = document.createElement("div");
+          row.className = "feedback-row";
+          const up = document.createElement("button");
+          up.className = "fb-btn";
+          up.textContent = "👍";
+          const down = document.createElement("button");
+          down.className = "fb-btn";
+          down.textContent = "👎";
+          const rate = async (rating, btn, otherBtn) => {
+            btn.classList.add("active");
+            otherBtn.classList.remove("active");
+            try {
+              await fetch(`${API_BASE}/feedback`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ session_id: sessionId, rating }),
+              });
+            } catch (e) {
+              /* best-effort — feedback failing shouldn't disrupt the chat */
+            }
+          };
+          up.onclick = () => rate(1, up, down);
+          down.onclick = () => rate(-1, down, up);
+          row.appendChild(up);
+          row.appendChild(down);
+          msg.appendChild(row);
+        }
+
         chat.appendChild(msg);
         chat.scrollTop = chat.scrollHeight;
         return msg;
@@ -369,17 +544,27 @@
         try {
           const res = await fetch(`${API_BASE}/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: text }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ query: text, session_id: sessionId }),
           });
           removeTypingIndicator();
+
+          if (res.status === 401) {
+            addMessage("error", "Your session expired. Please sign in again.");
+            setTimeout(logout, 1500);
+            return;
+          }
 
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             addMessage("error", err.detail || `Request failed (${res.status})`);
           } else {
             const data = await res.json();
-            addMessage("bot", data.answer, data.sources);
+            sessionId = data.session_id;
+            addMessage("bot", data.answer, data.sources, true);
           }
         } catch (e) {
           removeTypingIndicator();
