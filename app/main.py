@@ -12,6 +12,8 @@ Endpoint <-> requirement map:
   GET  /logs          - FR-9 / Auditability (Admin only)
 """
 
+import json
+import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -20,7 +22,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from app import agent, config, db, guardrails, rag, security
+from app import agent, config, db, guardrails, pdf_ingest, rag, security
 
 # In-memory index: chunk text/metadata + embeddings, rebuilt at startup.
 # (Vector store, per Section 14: embeddings don't need to survive a
@@ -179,6 +181,43 @@ def _log_turn(session_id, username, query, intent, block_reason, answer, sources
 
 
 # --------------------------------------------------------------------------
+# Session history — backs the sidebar (own sessions only, unless admin)
+# --------------------------------------------------------------------------
+@app.get("/sessions")
+def list_sessions(user: security.TokenData = Depends(security.get_current_user)):
+    query = {} if user.role == "admin" else {"user_id": user.username}
+    sessions = (
+        db.chat_sessions.find(query, {"messages": {"$slice": -1}})
+        .sort("started_at", -1)
+        .limit(50)
+    )
+    result = []
+    for s in sessions:
+        msgs = s.get("messages", [])
+        preview = msgs[-1]["text"] if msgs else "(empty session)"
+        result.append(
+            {
+                "session_id": s["_id"],
+                "started_at": s.get("started_at"),
+                "preview": preview[:80],
+            }
+        )
+    return {"sessions": result}
+
+
+@app.get("/sessions/{session_id}")
+def get_session(
+    session_id: str, user: security.TokenData = Depends(security.get_current_user)
+):
+    session = db.chat_sessions.find_one({"_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    if user.role != "admin" and session.get("user_id") != user.username:
+        raise HTTPException(status_code=403, detail="Not your session.")
+    return {"session_id": session_id, "messages": session.get("messages", [])}
+
+
+# --------------------------------------------------------------------------
 # Feedback (FR-12)
 # --------------------------------------------------------------------------
 class FeedbackRequest(BaseModel):
@@ -213,20 +252,69 @@ async def ingest_document(
     file: UploadFile = File(...),
     user: security.TokenData = Depends(security.require_role("admin")),
 ):
-    if not file.filename.endswith(".txt"):
-        raise HTTPException(status_code=400, detail="Only .txt files are supported for now.")
-    contents = (await file.read()).decode("utf-8", errors="ignore")
+    """Accepts a .pdf, .json, or (legacy) .txt file and stores it in
+    config.DATA_DIR as the canonical JSON schema (source/category/pages),
+    then re-chunks and re-embeds the whole index.
 
-    import os
+    .pdf  -> extracted via pdf_ingest.pdf_to_doc() (pdfplumber)
+    .json -> must already match the schema; stored as-is after validation
+    .txt  -> wrapped into the schema as a single page (back-compat only)
+    """
+    filename = file.filename
+    ext = os.path.splitext(filename)[1].lower()
     os.makedirs(config.DATA_DIR, exist_ok=True)
-    dest_path = os.path.join(config.DATA_DIR, file.filename)
-    with open(dest_path, "w", encoding="utf-8") as f:
-        f.write(contents)
+
+    if ext == ".pdf":
+        raw = await file.read()
+        tmp_path = os.path.join(config.DATA_DIR, f"_upload_{filename}")
+        with open(tmp_path, "wb") as f:
+            f.write(raw)
+        try:
+            doc = pdf_ingest.pdf_to_doc(tmp_path)
+        except ValueError as e:
+            os.remove(tmp_path)
+            raise HTTPException(status_code=422, detail=str(e))
+        os.remove(tmp_path)
+        out_name = os.path.splitext(filename)[0] + ".json"
+
+    elif ext == ".json":
+        raw = (await file.read()).decode("utf-8", errors="ignore")
+        try:
+            doc = json.loads(raw)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Not valid JSON.")
+        if "pages" not in doc or not isinstance(doc["pages"], list):
+            raise HTTPException(
+                status_code=422,
+                detail='Expected a "pages" array — e.g. '
+                '{"source": "...", "category": "...", "pages": [{"page_number": 1, "text": "..."}]}',
+            )
+        doc.setdefault("source", filename)
+        doc.setdefault("category", config.infer_category(doc["source"]))
+        out_name = filename
+
+    elif ext == ".txt":
+        text = (await file.read()).decode("utf-8", errors="ignore")
+        doc = pdf_ingest.text_to_doc(text, filename)
+        out_name = os.path.splitext(filename)[0] + ".json"
+
+    else:
+        raise HTTPException(
+            status_code=400, detail="Supported formats: .pdf, .json, .txt"
+        )
+
+    with open(os.path.join(config.DATA_DIR, out_name), "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False, indent=2)
 
     chunks = rag.load_and_chunk()
     chunks = rag.build_index(chunks)
     index_store["chunks"] = chunks
-    return {"status": "ingested", "chunks_loaded": len(chunks)}
+    return {
+        "status": "ingested",
+        "stored_as": out_name,
+        "pages": len(doc.get("pages", [])),
+        "chunks_loaded": len(chunks),
+    }
 
 
 # --------------------------------------------------------------------------

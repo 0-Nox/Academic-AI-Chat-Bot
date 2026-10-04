@@ -13,66 +13,76 @@ vectors themselves are rebuilt in memory at startup.
 """
 
 import glob
+import json
 import os
+import re
+import time
 
 import numpy as np
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
 from app import config, db
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
-# Best-effort mapping from filename keywords to a domain category, so
-# ingested documents get useful metadata (FR-4) even without a real ERP
-# feeding structured fields yet.
-_FILENAME_CATEGORY_HINTS = {
-    "attendance": "attendance",
-    "timetable": "timetable",
-    "course": "course_information",
-    "faculty": "faculty_details",
-    "exam": "examination_schedule",
-    "regulation": "academic_regulations",
-    "notice": "notices",
-    "assignment": "assignments",
-}
+# Kept as a re-export so existing imports (e.g. app.main) don't break.
+_infer_category = config.infer_category
 
 
-def _infer_category(filename: str) -> str:
-    lowered = filename.lower()
-    for hint, category in _FILENAME_CATEGORY_HINTS.items():
-        if hint in lowered:
-            return category
-    return "general_erp_usage"
+def _chunk_text(text, start_index=0):
+    """Splits a block of text into overlapping chunks. Returns a list of
+    (chunk_index, chunk_text) tuples, continuing the index count from
+    start_index (so chunk numbers stay unique across a multi-page document)."""
+    pieces = []
+    start = 0
+    idx = start_index
+    while start < len(text):
+        end = start + config.CHUNK_SIZE
+        chunk_text = text[start:end].strip()
+        if chunk_text:
+            pieces.append((idx, chunk_text))
+            idx += 1
+        start += config.CHUNK_SIZE - config.CHUNK_OVERLAP
+    return pieces
 
 
 def load_and_chunk(data_dir=None):
-    """Reads every .txt file in data_dir, chunks it, and returns a list of
-    dicts. Does NOT touch MongoDB or embeddings — pure text processing, so
-    it stays easy to unit test."""
+    """Reads every .json document in data_dir (the canonical schema produced
+    by pdf_ingest.py — source/category/pages[{page_number, text}]) and
+    chunks each page's text. Returns a list of chunk dicts. Does NOT touch
+    MongoDB or embeddings — pure data processing, so it stays easy to test.
+
+    Data is stored as JSON rather than plain .txt so each chunk can carry
+    real structure (page numbers, explicit category) instead of it being
+    inferred after the fact."""
     data_dir = data_dir or config.DATA_DIR
     chunks = []
-    for filepath in glob.glob(os.path.join(data_dir, "*.txt")):
-        source_name = os.path.basename(filepath)
-        category = _infer_category(source_name)
+    for filepath in glob.glob(os.path.join(data_dir, "*.json")):
         with open(filepath, "r", encoding="utf-8") as f:
-            text = f.read()
-        start = 0
+            try:
+                doc = json.load(f)
+            except json.JSONDecodeError:
+                continue  # skip malformed files rather than crash startup
+
+        source_name = doc.get("source") or os.path.basename(filepath)
+        category = doc.get("category") or config.infer_category(source_name)
         chunk_index = 0
-        while start < len(text):
-            end = start + config.CHUNK_SIZE
-            chunk_text = text[start:end].strip()
-            if chunk_text:
+        for page in doc.get("pages", []):
+            page_text = page.get("text", "")
+            page_number = page.get("page_number")
+            for idx, chunk_text in _chunk_text(page_text, chunk_index):
                 chunks.append(
                     {
                         "text": chunk_text,
                         "source": source_name,
                         "category": category,
-                        "chunk_index": chunk_index,
+                        "chunk_index": idx,
+                        "page": page_number,
                     }
                 )
-                chunk_index += 1
-            start += config.CHUNK_SIZE - config.CHUNK_OVERLAP
+                chunk_index = idx + 1
     return chunks
 
 
@@ -87,6 +97,7 @@ def persist_chunks(chunks):
             "source": c["source"],
             "category": c["category"],
             "chunk_index": c["chunk_index"],
+            "page": c.get("page"),
             "text": c["text"],
             "created_at": db.utcnow(),
         }
@@ -95,13 +106,55 @@ def persist_chunks(chunks):
     db.document_chunks.insert_many(docs)
 
 
+EMBED_BATCH_SIZE = 100  # Gemini's embed_content caps a batch at 100 requests
+MAX_RATE_LIMIT_RETRIES = 6
+
+
+def _extract_retry_delay(error, default=30.0):
+    """Gemini's 429 message includes 'Please retry in 30.3s' — pull that
+    out so we wait exactly as long as asked rather than guessing."""
+    match = re.search(r"retry in ([\d.]+)s", str(error))
+    if match:
+        return float(match.group(1)) + 1.0  # small safety buffer
+    return default
+
+
+def _embed_batch_with_retry(batch, task_type):
+    """Calls embed_content with retry-and-wait on 429 RESOURCE_EXHAUSTED —
+    the free tier caps embed_content at 100 requests/minute *total*, so a
+    document with enough chunks to need multiple batches will reliably hit
+    this on the second batch within the same minute. Waiting out the
+    quota window (rather than failing) is the correct fix, not just a
+    bigger batch size."""
+    for attempt in range(1, MAX_RATE_LIMIT_RETRIES + 1):
+        try:
+            return client.models.embed_content(
+                model=config.EMBED_MODEL,
+                contents=batch,
+                config=types.EmbedContentConfig(task_type=task_type),
+            )
+        except genai_errors.ClientError as e:
+            is_rate_limit = "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e)
+            if not is_rate_limit or attempt == MAX_RATE_LIMIT_RETRIES:
+                raise
+            delay = _extract_retry_delay(e)
+            print(
+                f"Embedding rate limit hit — waiting {delay:.0f}s "
+                f"(attempt {attempt}/{MAX_RATE_LIMIT_RETRIES})..."
+            )
+            time.sleep(delay)
+
+
 def embed_texts(texts, task_type="RETRIEVAL_DOCUMENT"):
-    result = client.models.embed_content(
-        model=config.EMBED_MODEL,
-        contents=texts,
-        config=types.EmbedContentConfig(task_type=task_type),
-    )
-    return [np.array(e.values) for e in result.embeddings]
+    """Embeds a list of texts, splitting into batches of EMBED_BATCH_SIZE
+    (the API rejects a single call with more than 100 texts) and retrying
+    with backoff on rate-limit errors between batches."""
+    all_embeddings = []
+    for i in range(0, len(texts), EMBED_BATCH_SIZE):
+        batch = texts[i : i + EMBED_BATCH_SIZE]
+        result = _embed_batch_with_retry(batch, task_type)
+        all_embeddings.extend(np.array(e.values) for e in result.embeddings)
+    return all_embeddings
 
 
 def build_index(chunks):
@@ -143,8 +196,11 @@ def generate_answer(query, retrieved, history=None):
     {"role": "user"|"assistant", "text": ...} dicts for short-term
     conversational memory (FR-7) — kept small (last few turns) by the
     caller, not here."""
+    def _label(c):
+        return f"{c['source']}, p.{c['page']}" if c.get("page") else c["source"]
+
     context_block = "\n\n".join(
-        f"[Source: {c['source']}]\n{c['text']}" for _, c in retrieved
+        f"[Source: {_label(c)}]\n{c['text']}" for _, c in retrieved
     )
     history_block = ""
     if history:
@@ -178,6 +234,9 @@ def answer_query(query, chunks, category=None, history=None):
             "I don't have any indexed documents to answer that from yet.",
             [],
         )
-    sources = sorted(set(c["source"] for _, c in retrieved))
+    def _label(c):
+        return f"{c['source']} (p.{c['page']})" if c.get("page") else c["source"]
+
+    sources = sorted(set(_label(c) for _, c in retrieved))
     answer = generate_answer(query, retrieved, history=history)
     return answer, sources

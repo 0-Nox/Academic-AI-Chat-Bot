@@ -52,3 +52,25 @@ SUPPORTED_DOMAINS = [
     "general_erp_usage",
 ]
 OUT_OF_SCOPE_LABEL = "out_of_scope"
+
+# Best-effort mapping from filename keywords to a domain category, so
+# ingested documents get useful metadata (FR-4) even without a real ERP
+# feeding structured fields yet. Shared by rag.py and pdf_ingest.py.
+FILENAME_CATEGORY_HINTS = {
+    "attendance": "attendance",
+    "timetable": "timetable",
+    "course": "course_information",
+    "faculty": "faculty_details",
+    "exam": "examination_schedule",
+    "regulation": "academic_regulations",
+    "notice": "notices",
+    "assignment": "assignments",
+}
+
+
+def infer_category(filename: str) -> str:
+    lowered = filename.lower()
+    for hint, category in FILENAME_CATEGORY_HINTS.items():
+        if hint in lowered:
+            return category
+    return "general_erp_usage"

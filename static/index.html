@@ -3,55 +3,95 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Campus Assistant</title>
+    <title>CAMPUS_ASSISTANT // Sunrise Institute</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <style>
       :root {
-        --navy: #1b3a5c;
-        --accent: #2e5c8a;
-        --bg: #f5f7fa;
-        --panel: #ffffff;
-        --sidebar: #eef2f6;
-        --user-bubble: #2e5c8a;
-        --bot-bubble: #ffffff;
-        --border: #dce3ea;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --code-bg: #f1f3f5;
+        --bg: #000000;
+        --panel: #0a0a0a;
+        --sidebar: #050505;
+        --text: #f5f5f5;
+        --muted: #8a8a8a;
+        --border: rgba(255, 255, 255, 0.16);
+        --border-strong: rgba(255, 255, 255, 0.4);
+        --red: #ff2d2d;
+        --red-dim: rgba(255, 45, 45, 0.35);
+        --user-fill: rgba(255, 45, 45, 0.07);
+        --code-bg: rgba(255, 255, 255, 0.06);
+        --font-dot: "DotGothic16", monospace;
+        --font-mono: "Space Mono", monospace;
       }
-      :root[data-theme="dark"] {
-        --navy: #142a42;
-        --accent: #5a9bd8;
-        --bg: #0f1621;
-        --panel: #182437;
-        --sidebar: #131d2c;
-        --user-bubble: #2e5c8a;
-        --bot-bubble: #182437;
-        --border: #2a3b52;
-        --text: #e5eaf1;
-        --muted: #8b9bb0;
-        --code-bg: #0f1621;
+      :root[data-theme="white"] {
+        --bg: #ffffff;
+        --panel: #fafafa;
+        --sidebar: #f2f2f2;
+        --text: #0a0a0a;
+        --muted: #6b6b6b;
+        --border: rgba(0, 0, 0, 0.14);
+        --border-strong: rgba(0, 0, 0, 0.4);
+        --user-fill: rgba(255, 45, 45, 0.05);
+        --code-bg: rgba(0, 0, 0, 0.05);
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        font-family: var(--font-mono);
         background: var(--bg);
         color: var(--text);
         height: 100vh;
         overflow: hidden;
+        background-image: radial-gradient(var(--border) 1px, transparent 1px);
+        background-size: 22px 22px;
+      }
+      ::selection {
+        background: var(--red);
+        color: #000;
       }
       #app {
         display: flex;
         height: 100vh;
       }
 
+      /* ---------- ticked container: corner crosshair marks ---------- */
+      .ticked {
+        position: relative;
+      }
+      .ticked::before,
+      .ticked::after {
+        content: "+";
+        position: absolute;
+        font-size: 11px;
+        color: var(--border-strong);
+        line-height: 1;
+        pointer-events: none;
+      }
+      .ticked::before {
+        top: 4px;
+        left: 4px;
+      }
+      .ticked::after {
+        top: 4px;
+        right: 4px;
+      }
+
+      .label {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
       /* ---------- Sidebar ---------- */
       #sidebar {
-        width: 260px;
+        width: 270px;
         flex-shrink: 0;
         background: var(--sidebar);
         border-right: 1px solid var(--border);
@@ -60,71 +100,89 @@
         transition: margin-left 0.2s ease;
       }
       #sidebar-header {
-        padding: 16px;
+        padding: 18px 16px 14px;
         display: flex;
         align-items: center;
         gap: 10px;
         border-bottom: 1px solid var(--border);
       }
       #sidebar-header .logo {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #4a7fb5, var(--navy));
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--border-strong);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 13px;
-        color: white;
+        font-family: var(--font-dot);
+        font-size: 16px;
         flex-shrink: 0;
+        position: relative;
       }
-      #sidebar-header span {
-        font-weight: 600;
-        font-size: 14px;
+      #sidebar-header .logo .dot {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: 0 0 6px var(--red);
+      }
+      #sidebar-header .title {
+        font-family: var(--font-dot);
+        font-size: 15px;
+        letter-spacing: 0.04em;
+      }
+      #sidebar-header .subtitle {
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-top: 2px;
       }
       #new-chat-btn {
-        margin: 12px;
+        margin: 14px 12px 8px;
         padding: 10px;
-        border: 1px solid var(--border);
-        background: var(--panel);
+        border: 1px solid var(--border-strong);
+        background: transparent;
         color: var(--text);
-        border-radius: 10px;
-        font-size: 13.5px;
-        font-weight: 600;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 700;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
       }
       #new-chat-btn:hover {
-        background: var(--bg);
+        background: var(--text);
+        color: var(--bg);
+      }
+      #session-list-label {
+        padding: 10px 16px 4px;
       }
       #session-list {
         flex: 1;
         overflow-y: auto;
-        padding: 0 8px;
+        padding: 0 10px;
       }
       .session-item {
         padding: 9px 10px;
-        border-radius: 8px;
         cursor: pointer;
-        font-size: 12.5px;
+        font-size: 11.5px;
         color: var(--muted);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-bottom: 2px;
+        border-left: 2px solid transparent;
+        margin-bottom: 1px;
       }
       .session-item:hover {
-        background: var(--bg);
+        background: var(--code-bg);
       }
       .session-item.active {
-        background: var(--panel);
         color: var(--text);
-        font-weight: 600;
-        box-shadow: inset 3px 0 0 var(--accent);
+        border-left-color: var(--red);
+        background: var(--code-bg);
       }
       #sidebar-footer {
         border-top: 1px solid var(--border);
@@ -135,28 +193,31 @@
       }
       #user-badge {
         flex: 1;
-        font-size: 12px;
+        font-size: 10.5px;
+        letter-spacing: 0.05em;
         color: var(--muted);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        text-transform: uppercase;
       }
       .icon-btn {
         background: transparent;
         border: 1px solid var(--border);
-        border-radius: 8px;
         width: 30px;
         height: 30px;
         cursor: pointer;
         color: var(--text);
-        font-size: 14px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.05em;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
       }
       .icon-btn:hover {
-        background: var(--bg);
+        border-color: var(--border-strong);
       }
 
       /* ---------- Main column ---------- */
@@ -167,69 +228,74 @@
         min-width: 0;
       }
       header {
-        background: var(--navy);
-        color: white;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
         padding: 14px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         flex-shrink: 0;
       }
       #hamburger {
         display: none;
         background: transparent;
-        border: none;
-        color: white;
-        font-size: 20px;
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 14px;
         cursor: pointer;
-        padding: 0 4px;
+        padding: 5px 9px;
       }
       header h1 {
-        font-size: 16px;
+        font-family: var(--font-dot);
+        font-size: 14px;
+        letter-spacing: 0.03em;
         margin: 0;
-        font-weight: 600;
+        font-weight: 400;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-transform: uppercase;
       }
       header .status {
         margin-left: auto;
-        font-size: 12px;
-        color: #b9cbdd;
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 7px;
         flex-shrink: 0;
       }
       header .dot {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background: #4ade80;
+        background: var(--red);
+        box-shadow: 0 0 6px var(--red);
         flex-shrink: 0;
       }
       #chat {
         flex: 1;
         overflow-y: auto;
-        padding: 24px;
+        padding: 26px 24px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
-        max-width: 780px;
+        gap: 20px;
+        max-width: 800px;
         width: 100%;
         margin: 0 auto;
       }
       .msg {
         display: flex;
         gap: 10px;
-        max-width: 84%;
-        animation: rise 0.2s ease-out;
+        max-width: 86%;
+        animation: rise 0.18s ease-out;
       }
       @keyframes rise {
         from {
           opacity: 0;
-          transform: translateY(6px);
+          transform: translateY(5px);
         }
         to {
           opacity: 1;
@@ -244,23 +310,20 @@
         align-self: flex-start;
       }
       .avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
+        width: 26px;
+        height: 26px;
         flex-shrink: 0;
+        border: 1px solid var(--border-strong);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
-        font-weight: 700;
-        color: white;
+        font-family: var(--font-dot);
+        font-size: 11px;
         margin-top: 2px;
       }
       .msg.user .avatar {
-        background: var(--user-bubble);
-      }
-      .msg.bot .avatar {
-        background: linear-gradient(135deg, #4a7fb5, var(--navy));
+        border-color: var(--red-dim);
+        color: var(--red);
       }
       .msg-col {
         display: flex;
@@ -270,11 +333,19 @@
       .msg.user .msg-col {
         align-items: flex-end;
       }
+      .msg-tag {
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
       .bubble {
         padding: 11px 15px;
-        border-radius: 14px;
-        line-height: 1.55;
-        font-size: 14.5px;
+        line-height: 1.6;
+        font-size: 13.5px;
+        border: 1px solid var(--border);
+        background: var(--panel);
       }
       .bubble p {
         margin: 0 0 8px;
@@ -290,67 +361,59 @@
       .bubble code {
         background: var(--code-bg);
         padding: 1px 5px;
-        border-radius: 4px;
-        font-size: 13px;
+        font-size: 12px;
       }
       .bubble pre {
         background: var(--code-bg);
         padding: 10px;
-        border-radius: 8px;
         overflow-x: auto;
+        border-left: 2px solid var(--red-dim);
       }
       .msg.user .bubble {
-        background: var(--user-bubble);
-        color: white;
-        border-bottom-right-radius: 4px;
+        background: var(--user-fill);
+        border-color: var(--red-dim);
         white-space: pre-wrap;
       }
-      .msg.bot .bubble {
-        background: var(--bot-bubble);
-        border: 1px solid var(--border);
-        border-bottom-left-radius: 4px;
-      }
       .sources {
-        margin-top: 6px;
+        margin-top: 7px;
         display: flex;
         gap: 6px;
         flex-wrap: wrap;
       }
       .source-pill {
-        font-size: 11px;
-        background: var(--bg);
-        color: var(--accent);
-        border: 1px solid var(--border);
-        padding: 3px 9px;
-        border-radius: 999px;
-        font-weight: 500;
+        font-size: 10px;
+        letter-spacing: 0.03em;
+        background: transparent;
+        color: var(--red);
+        border: 1px solid var(--red-dim);
+        padding: 3px 8px;
       }
       .msg.error .bubble {
-        background: #fdecec;
-        border: 1px solid #f3c6c6;
-        color: #a33a3a;
+        border-color: var(--red);
+        color: var(--red);
       }
       .msg-actions {
         display: flex;
         gap: 6px;
-        margin-top: 6px;
+        margin-top: 7px;
       }
       .msg-actions button {
         border: 1px solid var(--border);
-        background: var(--panel);
-        border-radius: 8px;
-        padding: 3px 8px;
+        background: transparent;
+        padding: 3px 9px;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 10.5px;
+        font-family: var(--font-mono);
         color: var(--muted);
+        letter-spacing: 0.04em;
       }
       .msg-actions button.active {
-        background: var(--accent);
-        color: white;
-        border-color: var(--accent);
+        border-color: var(--red);
+        color: var(--red);
       }
       .msg-actions button:hover {
-        background: var(--bg);
+        border-color: var(--border-strong);
+        color: var(--text);
       }
       .typing {
         display: flex;
@@ -358,10 +421,10 @@
         padding: 14px 16px;
       }
       .typing span {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
-        background: var(--muted);
+        background: var(--red);
         animation: bounce 1.2s infinite;
       }
       .typing span:nth-child(2) {
@@ -375,7 +438,7 @@
         60%,
         100% {
           transform: translateY(0);
-          opacity: 0.4;
+          opacity: 0.35;
         }
         30% {
           transform: translateY(-4px);
@@ -389,71 +452,98 @@
         flex-shrink: 0;
       }
       #input-form {
-        max-width: 780px;
+        max-width: 800px;
         margin: 0 auto;
         display: flex;
         gap: 10px;
         align-items: flex-end;
         background: var(--bg);
         border: 1px solid var(--border);
-        border-radius: 18px;
         padding: 6px 6px 6px 16px;
       }
       #input-form.focused {
-        border-color: var(--accent);
+        border-color: var(--red-dim);
       }
       #query {
         flex: 1;
         border: none;
         background: transparent;
-        font-size: 14.5px;
+        font-size: 13.5px;
         outline: none;
         resize: none;
         max-height: 140px;
-        padding: 8px 0;
-        font-family: inherit;
+        padding: 9px 0;
+        font-family: var(--font-mono);
         color: var(--text);
         line-height: 1.4;
       }
+      #query::placeholder {
+        color: var(--muted);
+      }
       #send {
-        background: var(--navy);
-        color: white;
+        background: var(--text);
+        color: var(--bg);
         border: none;
-        border-radius: 14px;
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         flex-shrink: 0;
-        font-size: 15px;
+        font-size: 14px;
         cursor: pointer;
-        transition: background 0.15s;
+        font-family: var(--font-mono);
       }
       #send:hover:not(:disabled) {
-        background: var(--accent);
+        background: var(--red);
+        color: #fff;
       }
       #send:disabled {
-        opacity: 0.4;
+        opacity: 0.3;
         cursor: not-allowed;
       }
       #input-hint {
-        max-width: 780px;
-        margin: 6px auto 0;
-        font-size: 11px;
+        max-width: 800px;
+        margin: 7px auto 0;
+        font-size: 10px;
+        letter-spacing: 0.04em;
         color: var(--muted);
         text-align: center;
+        text-transform: uppercase;
       }
       .empty-state {
         margin: auto;
         text-align: center;
         color: var(--muted);
-        max-width: 440px;
+        max-width: 460px;
+      }
+      .empty-state .glyph {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 18px;
+        border: 1px solid var(--border-strong);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .empty-state .glyph::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: 0 0 10px var(--red);
       }
       .empty-state h2 {
         color: var(--text);
-        font-size: 19px;
-        margin-bottom: 6px;
+        font-family: var(--font-dot);
+        font-size: 17px;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
       }
       .empty-state p {
-        font-size: 13.5px;
+        font-size: 12.5px;
         line-height: 1.6;
       }
       .suggestions {
@@ -461,20 +551,20 @@
         flex-wrap: wrap;
         gap: 8px;
         justify-content: center;
-        margin-top: 16px;
+        margin-top: 18px;
       }
       .suggestion-chip {
-        font-size: 12.5px;
-        background: var(--panel);
+        font-size: 11px;
+        background: transparent;
         border: 1px solid var(--border);
         padding: 7px 12px;
-        border-radius: 16px;
         cursor: pointer;
-        color: var(--accent);
-        transition: background 0.15s;
+        color: var(--text);
+        transition: border-color 0.15s;
       }
       .suggestion-chip:hover {
-        background: var(--sidebar);
+        border-color: var(--red);
+        color: var(--red);
       }
 
       /* ---------- Login ---------- */
@@ -486,56 +576,80 @@
         align-items: center;
         justify-content: center;
         z-index: 50;
+        background-image: radial-gradient(var(--border) 1px, transparent 1px);
+        background-size: 22px 22px;
       }
       #login-card {
         background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 32px;
+        border: 1px solid var(--border-strong);
+        padding: 34px 30px;
         width: 320px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      }
+      #login-card .mark {
+        font-family: var(--font-dot);
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        color: var(--red);
+        margin-bottom: 14px;
+        text-transform: uppercase;
       }
       #login-card h2 {
         margin: 0 0 4px;
-        font-size: 18px;
+        font-family: var(--font-dot);
+        font-size: 19px;
+        font-weight: 400;
         color: var(--text);
+        text-transform: uppercase;
       }
       #login-card p {
-        margin: 0 0 18px;
-        font-size: 12.5px;
+        margin: 0 0 20px;
+        font-size: 11.5px;
         color: var(--muted);
+        letter-spacing: 0.03em;
       }
       #login-card input {
         width: 100%;
-        padding: 10px 12px;
+        padding: 11px 12px;
         margin-bottom: 10px;
         border: 1px solid var(--border);
-        border-radius: 8px;
-        font-size: 14px;
         background: var(--bg);
         color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 13px;
+      }
+      #login-card input:focus {
+        outline: none;
+        border-color: var(--red-dim);
       }
       #login-card button {
         width: 100%;
-        padding: 10px;
-        background: var(--navy);
-        color: white;
+        padding: 11px;
+        background: var(--text);
+        color: var(--bg);
         border: none;
-        border-radius: 8px;
-        font-weight: 600;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         cursor: pointer;
       }
+      #login-card button:hover {
+        background: var(--red);
+        color: #fff;
+      }
       #login-error {
-        color: #d9736f;
-        font-size: 12.5px;
-        margin-top: 8px;
+        color: var(--red);
+        font-size: 11.5px;
+        margin-top: 10px;
         display: none;
       }
       #login-hint {
-        margin-top: 14px;
-        font-size: 11px;
+        margin-top: 16px;
+        font-size: 10px;
         color: var(--muted);
-        line-height: 1.5;
+        line-height: 1.6;
+        letter-spacing: 0.02em;
       }
 
       /* ---------- Mobile ---------- */
@@ -547,44 +661,45 @@
           position: fixed;
           inset: 0 auto 0 0;
           z-index: 40;
-          margin-left: -260px;
+          margin-left: -270px;
         }
         #sidebar.open {
           margin-left: 0;
-          box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+          box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
         }
         #sidebar-overlay.open {
           display: block;
           position: fixed;
           inset: 0;
-          background: rgba(0, 0, 0, 0.35);
+          background: rgba(0, 0, 0, 0.55);
           z-index: 35;
         }
         #hamburger {
           display: block;
         }
         header h1 {
-          font-size: 14px;
+          font-size: 12px;
         }
         .msg {
-          max-width: 92%;
+          max-width: 94%;
         }
       }
     </style>
   </head>
   <body>
     <div id="login-overlay">
-      <div id="login-card">
+      <div id="login-card" class="ticked">
+        <div class="mark">SYS // AUTH</div>
         <h2>Campus Assistant</h2>
         <p>Sign in to continue</p>
         <form id="login-form">
-          <input type="text" id="login-username" placeholder="Username" autocomplete="username" />
-          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+          <input type="text" id="login-username" placeholder="USERNAME" autocomplete="username" />
+          <input type="password" id="login-password" placeholder="PASSWORD" autocomplete="current-password" />
           <button type="submit" id="login-submit">Sign in</button>
         </form>
         <div id="login-error">Invalid username or password.</div>
         <div id="login-hint">
-          Demo accounts: student1/student123 · faculty1/faculty123 · admin1/admin123
+          DEMO — student1/student123 · faculty1/faculty123 · admin1/admin123
         </div>
       </div>
     </div>
@@ -593,13 +708,20 @@
       <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
       <div id="sidebar">
         <div id="sidebar-header">
-          <div class="logo">SI</div>
-          <span>Campus Assistant</span>
+          <div class="logo">
+            AI
+            <span class="dot"></span>
+          </div>
+          <div>
+            <div class="title">ASSISTANT</div>
+            <div class="subtitle">Sunrise Institute</div>
+          </div>
         </div>
-        <button id="new-chat-btn" onclick="startNewChat()">+ New chat</button>
+        <button id="new-chat-btn" onclick="startNewChat()">+ New Session</button>
+        <div id="session-list-label" class="label">History</div>
         <div id="session-list"></div>
         <div id="sidebar-footer">
-          <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+          <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle variant">BLK</button>
           <span id="user-badge"></span>
           <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
         </div>
@@ -607,7 +729,7 @@
 
       <div id="main">
         <header>
-          <button id="hamburger" onclick="toggleSidebar()">☰</button>
+          <button id="hamburger" onclick="toggleSidebar()">≡</button>
           <h1>Sunrise Institute — Campus Assistant</h1>
           <div class="status">
             <span class="dot" id="status-dot"></span>
@@ -617,10 +739,11 @@
 
         <div id="chat">
           <div class="empty-state" id="empty-state">
-            <h2>Ask about attendance, timetables, exams, or notices</h2>
+            <div class="glyph"></div>
+            <h2>Ask Anything, Academic</h2>
             <p>
               Answers are grounded in institutional documents — every response cites
-              its source.
+              its source and page.
             </p>
             <div class="suggestions">
               <div class="suggestion-chip" onclick="askSuggestion(this)">
@@ -639,9 +762,9 @@
         <div id="input-bar">
           <form id="input-form">
             <textarea id="query" placeholder="Ask a question..." rows="1"></textarea>
-            <button type="submit" id="send">➤</button>
+            <button type="submit" id="send">&gt;</button>
           </form>
-          <div id="input-hint">Enter to send · Shift+Enter for a new line</div>
+          <div id="input-hint">Enter to send — Shift+Enter for new line</div>
         </div>
       </div>
     </div>
@@ -667,18 +790,15 @@
       let sessionId = null;
       let token = localStorage.getItem("access_token");
 
-      // ---------- Theme ----------
+      // ---------- Theme (Nothing's two product variants: Black / White) ----------
       function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
-        document.getElementById("theme-toggle").textContent = theme === "dark" ? "☀️" : "🌙";
+        document.getElementById("theme-toggle").textContent = theme === "white" ? "WHT" : "BLK";
         localStorage.setItem("theme", theme);
       }
-      applyTheme(
-        localStorage.getItem("theme") ||
-          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
-      );
+      applyTheme(localStorage.getItem("theme") || "black");
       function toggleTheme() {
-        applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+        applyTheme(document.documentElement.dataset.theme === "white" ? "black" : "white");
       }
 
       // ---------- Sidebar (mobile) ----------
@@ -699,7 +819,7 @@
       function decodeUsername(jwt) {
         try {
           const payload = JSON.parse(atob(jwt.split(".")[1]));
-          return `${payload.sub} · ${payload.role}`;
+          return `${payload.sub} · ${payload.role}`.toUpperCase();
         } catch (e) {
           return "";
         }
@@ -753,14 +873,17 @@
           const data = await res.json();
           if (data.status === "ok" && data.chunks_loaded > 0) {
             statusDot.style.background = "#4ADE80";
-            statusText.textContent = `Ready · ${data.chunks_loaded} chunks`;
+            statusDot.style.boxShadow = "0 0 6px #4ADE80";
+            statusText.textContent = `Online · ${data.chunks_loaded} chunks`;
           } else {
             statusDot.style.background = "#FBBF24";
-            statusText.textContent = "Index not loaded";
+            statusDot.style.boxShadow = "0 0 6px #FBBF24";
+            statusText.textContent = "Index Empty";
           }
         } catch (e) {
           statusDot.style.background = "#F87171";
-          statusText.textContent = "Backend unreachable";
+          statusDot.style.boxShadow = "0 0 6px #F87171";
+          statusText.textContent = "Offline";
         }
       }
 
@@ -783,7 +906,7 @@
         sessions.forEach((s) => {
           const item = document.createElement("div");
           item.className = "session-item" + (s.session_id === sessionId ? " active" : "");
-          item.textContent = s.preview || "New chat";
+          item.textContent = s.preview || "New session";
           item.title = s.preview || "";
           item.onclick = () => loadSession(s.session_id);
           sessionListEl.appendChild(item);
@@ -824,8 +947,9 @@
         el.className = "empty-state";
         el.id = "empty-state";
         el.innerHTML = `
-          <h2>Ask about attendance, timetables, exams, or notices</h2>
-          <p>Answers are grounded in institutional documents — every response cites its source.</p>
+          <div class="glyph"></div>
+          <h2>Ask Anything, Academic</h2>
+          <p>Answers are grounded in institutional documents — every response cites its source and page.</p>
           <div class="suggestions">
             <div class="suggestion-chip" onclick="askSuggestion(this)">What is the minimum attendance percentage required?</div>
             <div class="suggestion-chip" onclick="askSuggestion(this)">When is the CS301 mid-semester exam?</div>
@@ -859,6 +983,15 @@
         const col = document.createElement("div");
         col.className = "msg-col";
 
+        const tag = document.createElement("div");
+        tag.className = "msg-tag";
+        const now = new Date();
+        tag.textContent =
+          (role === "user" ? "YOU" : role === "error" ? "SYSTEM" : "ASSISTANT") +
+          " · " +
+          now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        col.appendChild(tag);
+
         const bubble = document.createElement("div");
         bubble.className = "bubble";
         if (role === "bot") {
@@ -885,19 +1018,19 @@
           row.className = "msg-actions";
 
           const copyBtn = document.createElement("button");
-          copyBtn.textContent = "Copy";
+          copyBtn.textContent = "COPY";
           copyBtn.onclick = () => {
             navigator.clipboard.writeText(text).then(() => {
-              copyBtn.textContent = "Copied";
-              setTimeout(() => (copyBtn.textContent = "Copy"), 1200);
+              copyBtn.textContent = "COPIED";
+              setTimeout(() => (copyBtn.textContent = "COPY"), 1200);
             });
           };
           row.appendChild(copyBtn);
 
           const up = document.createElement("button");
-          up.textContent = "👍";
+          up.textContent = "+1";
           const down = document.createElement("button");
-          down.textContent = "👎";
+          down.textContent = "-1";
           const rate = async (rating, btn, otherBtn) => {
             btn.classList.add("active");
             otherBtn.classList.remove("active");
