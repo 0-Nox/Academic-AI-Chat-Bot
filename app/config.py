@@ -39,6 +39,26 @@ TOP_K = int(os.environ.get("TOP_K", "3"))
 # --- Data source for ingestion (FR-10) ---
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 
+# --- Summaries, PDF export and e-mail to staff ---
+# Long documents are summarised in groups of this many characters and the
+# partial summaries are then combined (map-reduce).
+SUMMARY_GROUP_CHARS = int(os.environ.get("SUMMARY_GROUP_CHARS", "30000"))
+SUMMARY_MAX_CALLS = int(os.environ.get("SUMMARY_MAX_CALLS", "10"))
+SUMMARY_SESSION_MAX_CHARS = int(os.environ.get("SUMMARY_SESSION_MAX_CHARS", "40000"))
+
+# SMTP server used to send the PDF. E-mail is disabled until SMTP_HOST is set.
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_FROM = os.environ.get("SMTP_FROM", "") or SMTP_USER
+SMTP_SECURITY = os.environ.get("SMTP_SECURITY", "starttls").lower()  # starttls | ssl | none
+EMAIL_MAX_PER_HOUR = int(os.environ.get("EMAIL_MAX_PER_HOUR", "10"))     # per user
+EMAIL_MAX_RECIPIENTS = int(os.environ.get("EMAIL_MAX_RECIPIENTS", "5"))  # per message
+# Optional JSON list that seeds the staff directory on first use, e.g.
+# [{"name": "Dr. A. Sree Lakshmi", "designation": "Associate Professor", "email": "..."}]
+STAFF_CONTACTS = os.environ.get("STAFF_CONTACTS", "")
+
 # Nine supported domains (Scope, Section 3.1) plus the guardrail catch-all.
 SUPPORTED_DOMAINS = [
     "attendance",

@@ -652,6 +652,67 @@
         letter-spacing: 0.02em;
       }
 
+
+      /* ---------- Summary / PDF / e-mail panel ---------- */
+      #tools-btn {
+        margin: 0 12px 8px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #tools-btn:hover { background: var(--text); color: var(--bg); }
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0, 0, 0, 0.62); z-index: 60;
+        display: none; align-items: center; justify-content: center; padding: 12px;
+      }
+      .modal-overlay.open { display: flex; }
+      #tools-card {
+        background: var(--panel); border: 1px solid var(--border-strong);
+        width: min(580px, 100%); max-height: 92vh; overflow-y: auto; padding: 22px 24px;
+      }
+      #tools-card h2 { margin: 0 0 4px; font-family: var(--font-dot); font-size: 18px; font-weight: 400; }
+      .tools-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .tools-head .mark { font-family: var(--font-dot); font-size: 11px; letter-spacing: 0.15em; color: var(--red); }
+      .tools-step { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px; }
+      .tools-step .label { margin-bottom: 8px; }
+      .seg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 10px; }
+      .seg label { font-size: 11px; letter-spacing: 0.04em; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+      .seg label.off { opacity: 0.4; cursor: not-allowed; }
+      .seg input { accent-color: var(--red); }
+      #tools-card select, #tools-card textarea, #tools-card input[type="number"], #tools-card input[type="text"], #tools-card input[type="email"] {
+        width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border);
+        font-family: var(--font-mono); font-size: 12px; padding: 8px 10px; margin-bottom: 8px; text-transform: none;
+      }
+      #tools-card textarea { min-height: 60px; resize: vertical; }
+      #tools-card select:focus, #tools-card textarea:focus, #tools-card input:focus { outline: none; border-color: var(--red-dim); }
+      .row2 { display: flex; gap: 8px; } .row2 > * { flex: 1; }
+      .act {
+        padding: 9px 14px; border: 1px solid var(--border-strong); background: transparent; color: var(--text);
+        font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+      }
+      .act:hover:not(:disabled) { background: var(--text); color: var(--bg); }
+      .act:disabled { opacity: 0.4; cursor: not-allowed; }
+      .out {
+        white-space: pre-wrap; max-height: 220px; overflow: auto; margin: 10px 0 0; padding: 10px;
+        border: 1px solid var(--border); background: var(--bg); font-family: var(--font-mono);
+        font-size: 12px; line-height: 1.55; text-transform: none;
+      }
+      .staff-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 11.5px; text-transform: none; }
+      .staff-row input { accent-color: var(--red); }
+      .staff-row .who { flex: 1; } .staff-row .who small { color: var(--muted); display: block; font-size: 10.5px; }
+      .staff-row .del { border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; padding: 2px 6px; }
+      .staff-empty { font-size: 11.5px; color: var(--muted); text-transform: none; padding: 4px 0 8px; }
+      .admin-add { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+      #tools-status { font-size: 11.5px; min-height: 18px; margin-top: 14px; text-transform: none; color: var(--muted); }
+      #tools-status.err { color: var(--red); } #tools-status.ok { color: var(--text); }
+
       /* ---------- Mobile ---------- */
       #sidebar-overlay {
         display: none;
@@ -718,6 +779,7 @@
           </div>
         </div>
         <button id="new-chat-btn" onclick="startNewChat()">+ New Session</button>
+        <button id="tools-btn" onclick="openTools()">Summary · PDF · E-mail</button>
         <div id="session-list-label" class="label">History</div>
         <div id="session-list"></div>
         <div id="sidebar-footer">
@@ -766,6 +828,52 @@
           </form>
           <div id="input-hint">Enter to send — Shift+Enter for new line</div>
         </div>
+      </div>
+    </div>
+
+    <div id="tools-overlay" class="modal-overlay" onclick="if (event.target === this) closeTools()">
+      <div id="tools-card" class="ticked">
+        <div class="tools-head"><span class="mark">SYS // SHARE</span><button class="icon-btn" onclick="closeTools()" title="Close">✕</button></div>
+        <h2>Summary, PDF and e-mail</h2>
+        <div class="tools-step">
+          <div class="label">1 · Summarise</div>
+          <div class="seg">
+            <label id="lbl-session"><input type="radio" name="tgt" value="session" checked /> This conversation</label>
+            <label><input type="radio" name="tgt" value="document" /> A document</label>
+          </div>
+          <div id="doc-box" hidden>
+            <select id="doc-select"></select>
+            <div class="label" style="margin-bottom:6px">Pages (optional, for long documents)</div>
+            <div class="row2"><input id="page-from" type="number" min="1" placeholder="From page" /><input id="page-to" type="number" min="1" placeholder="To page" /></div>
+          </div>
+          <div class="seg">
+            <label><input type="radio" name="len" value="short" /> Short</label>
+            <label><input type="radio" name="len" value="medium" checked /> Medium</label>
+            <label><input type="radio" name="len" value="detailed" /> Detailed</label>
+          </div>
+          <button class="act" id="btn-sum" onclick="doSummarise()">Generate summary</button>
+          <pre id="summary-out" class="out" hidden></pre>
+        </div>
+        <div class="tools-step">
+          <div class="label">2 · PDF content</div>
+          <div class="seg">
+            <label id="lbl-pdf-sum"><input type="radio" name="pdfkind" value="summary" checked /> The summary</label>
+            <label id="lbl-pdf-tr"><input type="radio" name="pdfkind" value="transcript" /> Full conversation with citations</label>
+          </div>
+          <button class="act" id="btn-pdf" onclick="doPdf()">Download PDF</button>
+        </div>
+        <div class="tools-step">
+          <div class="label">3 · E-mail the PDF to staff</div>
+          <div id="staff-list"></div>
+          <div id="admin-add" class="admin-add" hidden>
+            <div class="label">Admin: add a staff contact</div>
+            <input id="st-name" type="text" placeholder="Name" /><input id="st-desig" type="text" placeholder="Designation" /><input id="st-email" type="email" placeholder="E-mail address" />
+            <button class="act" onclick="addStaff()">Add contact</button>
+          </div>
+          <textarea id="mail-note" maxlength="1000" placeholder="Optional message to include (max 1000 characters)"></textarea>
+          <button class="act" id="btn-mail" onclick="doEmail()">Send PDF</button>
+        </div>
+        <div id="tools-status"></div>
       </div>
     </div>
 
@@ -1145,6 +1253,109 @@
       function askSuggestion(el) {
         sendQuery(el.textContent);
       }
+
+      // ---------- Summary, PDF and e-mail ----------
+      let lastSummaryId = null;
+      const $ = (id) => document.getElementById(id);
+      const authJson = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${token}` });
+      const userRole = () => { try { return JSON.parse(atob(token.split(".")[1])).role; } catch (e) { return ""; } };
+      const radio = (name) => document.querySelector(`input[name="${name}"]:checked`).value;
+      function toolsStatus(msg, kind) { const el = $("tools-status"); el.textContent = msg || ""; el.className = kind || ""; }
+      async function apiError(res) {
+        if (res.status === 401) { toolsStatus("Your session expired. Please sign in again.", "err"); setTimeout(logout, 1500); return; }
+        let d = ""; try { d = (await res.json()).detail; } catch (e) {}
+        if (Array.isArray(d)) d = "Please check the values you entered.";
+        toolsStatus(d || `Request failed (${res.status})`, "err");
+      }
+      function syncTargets() {
+        const doc = radio("tgt") === "document";
+        $("doc-box").hidden = !doc;
+        $("lbl-pdf-tr").classList.toggle("off", !sessionId);
+        document.querySelector('input[name="pdfkind"][value="transcript"]').disabled = !sessionId;
+      }
+      async function openTools() {
+        toggleSidebar(false); toolsStatus(""); lastSummaryId = null; $("summary-out").hidden = true;
+        const hasSession = !!sessionId;
+        document.querySelector('input[name="tgt"][value="session"]').disabled = !hasSession;
+        $("lbl-session").classList.toggle("off", !hasSession);
+        document.querySelector(`input[name="tgt"][value="${hasSession ? "session" : "document"}"]`).checked = true;
+        document.querySelector('input[name="pdfkind"][value="summary"]').checked = true;
+        syncTargets(); $("tools-overlay").classList.add("open");
+        $("admin-add").hidden = userRole() !== "admin";
+        try {
+          const r = await fetch(`${API_BASE}/documents`, { headers: authJson() });
+          if (r.ok) { const d = (await r.json()).documents; $("doc-select").innerHTML = "";
+            d.forEach((x) => { const o = document.createElement("option"); o.value = x.source; o.textContent = `${x.source} (${x.page_count} p.)`; $("doc-select").appendChild(o); }); }
+        } catch (e) {}
+        loadStaff();
+      }
+      function closeTools() { $("tools-overlay").classList.remove("open"); }
+      async function loadStaff() {
+        const box = $("staff-list"); box.innerHTML = "";
+        try {
+          const r = await fetch(`${API_BASE}/staff`, { headers: authJson() }); if (!r.ok) return;
+          const staff = (await r.json()).staff; const admin = userRole() === "admin";
+          if (!staff.length) { const e = document.createElement("div"); e.className = "staff-empty"; e.textContent = admin ? "No staff contacts yet. Add one below." : "No staff contacts yet. An administrator can add them."; box.appendChild(e); return; }
+          staff.forEach((c) => {
+            const row = document.createElement("label"); row.className = "staff-row";
+            const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = c.id; row.appendChild(cb);
+            const who = document.createElement("span"); who.className = "who"; who.textContent = c.name;
+            const sm = document.createElement("small"); sm.textContent = [c.designation, c.department, admin ? c.email : ""].filter(Boolean).join(" · "); who.appendChild(sm); row.appendChild(who);
+            if (admin) { const del = document.createElement("button"); del.className = "del"; del.type = "button"; del.textContent = "✕"; del.title = "Remove contact";
+              del.onclick = async (ev) => { ev.preventDefault(); const rr = await fetch(`${API_BASE}/staff/${c.id}`, { method: "DELETE", headers: authJson() }); if (rr.ok) loadStaff(); else apiError(rr); }; row.appendChild(del); }
+            box.appendChild(row);
+          });
+        } catch (e) {}
+      }
+      async function addStaff() {
+        const body = { name: $("st-name").value.trim(), designation: $("st-desig").value.trim(), email: $("st-email").value.trim() };
+        if (!body.name || !body.email) { toolsStatus("Enter a name and an e-mail address.", "err"); return; }
+        const r = await fetch(`${API_BASE}/staff`, { method: "POST", headers: authJson(), body: JSON.stringify(body) });
+        if (!r.ok) return apiError(r);
+        $("st-name").value = $("st-desig").value = $("st-email").value = ""; toolsStatus("Contact added.", "ok"); loadStaff();
+      }
+      async function doSummarise() {
+        const body = { length: radio("len") };
+        if (radio("tgt") === "session") body.session_id = sessionId; else {
+          body.source = $("doc-select").value; if (!body.source) { toolsStatus("No documents are available.", "err"); return; }
+          const pf = parseInt($("page-from").value, 10), pt = parseInt($("page-to").value, 10); if (pf) body.page_from = pf; if (pt) body.page_to = pt; }
+        $("btn-sum").disabled = true; toolsStatus("Summarising… a long document can take a minute.");
+        try {
+          const r = await fetch(`${API_BASE}/summarize`, { method: "POST", headers: authJson(), body: JSON.stringify(body) });
+          if (!r.ok) return apiError(r);
+          const j = await r.json(); lastSummaryId = j.summary_id; const out = $("summary-out"); out.textContent = j.summary; out.hidden = false;
+          toolsStatus(j.parts > 1 ? `Summary ready (combined from ${j.parts} parts).` : "Summary ready.", "ok");
+        } catch (e) { toolsStatus("Could not reach the server.", "err"); } finally { $("btn-sum").disabled = false; }
+      }
+      function pdfRequest() {
+        const kind = radio("pdfkind");
+        if (kind === "summary") { if (!lastSummaryId) { toolsStatus("Generate a summary first (step 1).", "err"); return null; } return { kind, summary_id: lastSummaryId }; }
+        if (!sessionId) { toolsStatus("Open or start a conversation first.", "err"); return null; } return { kind, session_id: sessionId };
+      }
+      async function doPdf() {
+        const body = pdfRequest(); if (!body) return; $("btn-pdf").disabled = true; toolsStatus("Preparing the PDF…");
+        try {
+          const r = await fetch(`${API_BASE}/export/pdf`, { method: "POST", headers: authJson(), body: JSON.stringify(body) });
+          if (!r.ok) return apiError(r);
+          const blob = await r.blob(); const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = m ? m[1] : "campus-assistant.pdf"; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000); toolsStatus("PDF downloaded.", "ok");
+        } catch (e) { toolsStatus("Could not reach the server.", "err"); } finally { $("btn-pdf").disabled = false; }
+      }
+      async function doEmail() {
+        const body = pdfRequest(); if (!body) return;
+        body.recipient_ids = [...document.querySelectorAll("#staff-list input:checked")].map((c) => c.value);
+        if (!body.recipient_ids.length) { toolsStatus("Choose at least one staff member.", "err"); return; }
+        const note = $("mail-note").value.trim(); if (note) body.message = note;
+        $("btn-mail").disabled = true; toolsStatus("Sending…");
+        try {
+          const r = await fetch(`${API_BASE}/email`, { method: "POST", headers: authJson(), body: JSON.stringify(body) });
+          if (!r.ok) return apiError(r);
+          const j = await r.json(); toolsStatus(`Sent to: ${j.sent_to.join(", ")}.`, "ok"); $("mail-note").value = "";
+        } catch (e) { toolsStatus("Could not reach the server.", "err"); } finally { $("btn-mail").disabled = false; }
+      }
+      document.querySelectorAll('input[name="tgt"]').forEach((el) => el.addEventListener("change", syncTargets));
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeTools(); });
     </script>
   </body>
 </html>

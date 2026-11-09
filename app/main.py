@@ -22,7 +22,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-from app import agent, config, db, guardrails, pdf_ingest, rag, security
+from app import agent, config, db, features, guardrails, pdf_ingest, rag, security
 
 # In-memory index: chunk text/metadata + embeddings, rebuilt at startup.
 # (Vector store, per Section 14: embeddings don't need to survive a
@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Academic Chatbot API", lifespan=lifespan)
+app.include_router(features.router)  # summaries, PDF export, e-mail to staff
 
 
 @app.get("/")

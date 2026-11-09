@@ -2,7 +2,8 @@
 MongoDB access layer (Section 14.1 — Data Architecture).
 
 Collections match the SRS's logical schema:
-  users, documents, document_chunks, chat_sessions, feedback, eval_logs
+  users, documents, document_chunks, chat_sessions, feedback, eval_logs,
+  summaries, staff_contacts, email_log
 
 Kept as a thin wrapper around pymongo so the rest of the app never imports
 pymongo directly — makes it easy to swap in Motor (async) or mongomock for
@@ -44,6 +45,9 @@ document_chunks = _db["document_chunks"]
 chat_sessions = _db["chat_sessions"]
 feedback = _db["feedback"]
 eval_logs = _db["eval_logs"]
+summaries = _db["summaries"]            # generated summaries (owner-bound)
+staff_contacts = _db["staff_contacts"]  # professors / staff who may receive e-mails
+email_log = _db["email_log"]            # audit trail and rate-limit source for e-mails
 
 
 def utcnow() -> datetime:
@@ -73,3 +77,6 @@ def ensure_indexes() -> None:
     chat_sessions.create_index("user_id")
     feedback.create_index("chat_session_id")
     eval_logs.create_index("timestamp")
+    summaries.create_index("owner")
+    staff_contacts.create_index("email", unique=True)
+    email_log.create_index([("user", ASCENDING), ("timestamp", ASCENDING)])
