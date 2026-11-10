@@ -1,0 +1,15 @@
+{
+  "source": "timetable_cse_sem5.pdf",
+  "category": "timetable",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "CSE Semester 5 Timetable. Monday: 9:00-10:00 Operating Systems (Room B-204), 10:00-11:00 Database Systems (Room B-204), 11:15-12:15 Computer Networks (Room B-210). Tuesday: 9:00-10:00 Computer Networks, 10:00-12:00 Operating Systems Lab (Lab 3), 2:00-3:00 Software Engineering (Room B-105)."
+    },
+    {
+      "page_number": 2,
+      "text": "Wednesday: 9:00-11:00 Database Systems Lab (Lab 2), 11:15-12:15 Software Engineering, 2:00-3:00 Professional Ethics. Thursday: 9:00-10:00 Operating Systems, 10:00-11:00 Database Systems, 2:00-4:00 Computer Networks Lab (Lab 1). Friday: 9:00-10:00 Software Engineering, 10:00-11:00 Professional Ethics, 11:15-12:15 Mentoring session. Classes run from 9:00 AM to 4:00 PM with a lunch break from 12:15 to 2:00 PM."
+    }
+  ]
+}

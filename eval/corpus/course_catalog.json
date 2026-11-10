@@ -1,0 +1,15 @@
+{
+  "source": "course_catalog.pdf",
+  "category": "course_information",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Course Catalog. CS301 Operating Systems: 4 credits, prerequisite CS201 Data Structures. CS302 Database Systems: 4 credits, prerequisite CS201 Data Structures. CS303 Computer Networks: 3 credits, prerequisite CS202 Computer Organization."
+    },
+    {
+      "page_number": 2,
+      "text": "CS304 Software Engineering: 3 credits, no prerequisite. HS301 Professional Ethics: 2 credits. CS351 Machine Learning is an elective worth 3 credits, open to Semester 5 and above, with prerequisite MA201 Probability and Statistics. A student must register for a minimum of 18 and a maximum of 24 credits per semester."
+    }
+  ]
+}

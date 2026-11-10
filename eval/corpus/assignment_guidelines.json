@@ -1,0 +1,15 @@
+{
+  "source": "assignment_guidelines.pdf",
+  "category": "assignments",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Assignment Guidelines. Assignments must be submitted through the LMS before 11:59 PM on the due date. Late submissions within 24 hours incur a 20% penalty; submissions later than 24 hours receive zero marks unless an extension was approved by the course instructor in advance."
+    },
+    {
+      "page_number": 2,
+      "text": "Database Systems Assignment 2 (ER modelling and normalization) is due 18 November and carries 10 marks. Operating Systems Assignment 3 (CPU scheduling simulation) is due 22 November and carries 15 marks. Plagiarism above 30% similarity as reported by the LMS checker results in zero marks and a report to the Department."
+    }
+  ]
+}

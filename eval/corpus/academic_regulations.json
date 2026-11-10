@@ -1,0 +1,15 @@
+{
+  "source": "academic_regulations.pdf",
+  "category": "academic_regulations",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Academic Regulations. Grading uses a 10-point scale: O (10) for 90 and above, A+ (9) for 80-89, A (8) for 70-79, B+ (7) for 60-69, B (6) for 50-59, and F (0) below 50, which is a fail. The minimum passing mark is 50 in each course, combining internal assessment (40%) and end-semester exam (60%)."
+    },
+    {
+      "page_number": 2,
+      "text": "A student who fails a course has a backlog and may reappear in the supplementary examination held in the following semester. A student with more than 4 active backlogs cannot be promoted to the next year. Requests for revaluation must be submitted within 10 days of result declaration with a fee of Rs. 1000 per course. A minimum CGPA of 5.0 is required for graduation."
+    }
+  ]
+}

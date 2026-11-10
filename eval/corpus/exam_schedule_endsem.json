@@ -1,0 +1,15 @@
+{
+  "source": "exam_schedule_endsem.pdf",
+  "category": "examination_schedule",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "End-Semester Examination Schedule, Semester 5. Operating Systems: 3 December, 10:00 AM-1:00 PM. Database Systems: 5 December, 10:00 AM-1:00 PM. Computer Networks: 8 December, 10:00 AM-1:00 PM."
+    },
+    {
+      "page_number": 2,
+      "text": "Software Engineering: 10 December, 10:00 AM-1:00 PM. Professional Ethics: 12 December, 10:00 AM-12:00 PM. Students must carry their university ID card and hall ticket; hall tickets are released on the ERP portal 7 days before the first exam. Mobile phones and smart watches are not permitted in the exam hall. Reporting time is 30 minutes before the exam begins."
+    }
+  ]
+}

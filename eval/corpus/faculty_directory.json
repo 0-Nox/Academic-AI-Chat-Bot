@@ -1,0 +1,15 @@
+{
+  "source": "faculty_directory.pdf",
+  "category": "faculty_details",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Faculty Directory, Department of Computer Science. Dr. Meera Iyer is the Head of Department and teaches Operating Systems; her office is Room A-310 and office hours are Tuesday and Thursday 3:00-4:30 PM. Prof. Arjun Rao teaches Database Systems; office Room A-312, office hours Monday and Wednesday 2:00-3:30 PM."
+    },
+    {
+      "page_number": 2,
+      "text": "Dr. Sana Qureshi teaches Computer Networks; office Room A-315, office hours Friday 1:00-3:00 PM. Prof. Vikram Nair teaches Software Engineering and coordinates the final-year project; office Room A-318. Department office email is cs.office@university.example and phone is 080-5550-1234."
+    }
+  ]
+}

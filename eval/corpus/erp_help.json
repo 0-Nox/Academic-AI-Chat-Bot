@@ -1,0 +1,15 @@
+{
+  "source": "erp_help.pdf",
+  "category": "general_erp_usage",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "ERP Portal Help. To log in, open the university ERP portal and use your student ID as username. If you forget your password, click 'Forgot Password' on the login page and a reset link is sent to your registered email; the link is valid for 30 minutes."
+    },
+    {
+      "page_number": 2,
+      "text": "To view attendance, go to Dashboard > Academics > Attendance. To download your hall ticket, go to Dashboard > Examinations > Hall Ticket. For technical problems, raise a ticket at the IT Helpdesk via the ERP 'Support' tab; tickets are answered within 2 working days."
+    }
+  ]
+}

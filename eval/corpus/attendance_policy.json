@@ -1,0 +1,15 @@
+{
+  "source": "attendance_policy.pdf",
+  "category": "attendance",
+  "page_count": 2,
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Attendance Policy. Students must maintain a minimum of 75% attendance in every course to be eligible to sit for the end-semester examination. Attendance is calculated as classes attended divided by total classes conducted, for each course separately."
+    },
+    {
+      "page_number": 2,
+      "text": "Students with attendance between 65% and 74% may apply for condonation by submitting a medical certificate or approved activity proof to the Head of Department within 7 days of the shortage notice. A condonation fee of Rs. 500 per course applies. Students below 65% are detained and must repeat the course."
+    }
+  ]
+}
